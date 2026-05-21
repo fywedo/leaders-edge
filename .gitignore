@@ -6,3 +6,6 @@ dist/
 .pnpm-store/
 .cache/
 .env
+
+# ftp-sync credentials
+.vscode/ftp-sync.json

@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS products (
   id           INT AUTO_INCREMENT PRIMARY KEY,
   title        VARCHAR(255) NOT NULL,
-  description  TEXT NOT NULL DEFAULT '',
+  description  TEXT NOT NULL,
   price        INT NOT NULL DEFAULT 0,
   product_type ENUM('Compendium','Framework','Playbook','Guide','Handbook') NOT NULL DEFAULT 'Guide',
   is_active    TINYINT(1) NOT NULL DEFAULT 1,
