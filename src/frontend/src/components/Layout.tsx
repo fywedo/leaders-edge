@@ -179,7 +179,7 @@ export default function Layout({ children }: LayoutProps) {
             <p className="text-xs text-muted-foreground">
               © {year} Vanguard Executives. All rights reserved.
             </p>
-            <p className="text-xs text-muted-foreground">
+            {/* <p className="text-xs text-muted-foreground">
               Built with love using{" "}
               <a
                 href={caffeineUrl}
@@ -189,7 +189,7 @@ export default function Layout({ children }: LayoutProps) {
               >
                 caffeine.ai
               </a>
-            </p>
+            </p> */}
           </div>
         </div>
       </footer>
