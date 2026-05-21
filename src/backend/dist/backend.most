@@ -1,0 +1,85 @@
+// Version: 1.0.0
+type Data__791452850<K, V> =
+  {var count : Nat__490723111; kvs : [var ?(K, V)]};
+type FAQ__461849730 = FAQ__807772090;
+type FAQ__807772090 =
+  {answer : Text; displayOrder : Nat; id : FaqId__519857278; question : Text};
+type FaqId__519857278 = Nat;
+type Internal__8484328<K, V> =
+  {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
+type LeadId__1073473045 = Nat;
+type Lead__531162083 =
+  {
+    email : Text;
+    fullName : Text;
+    id : LeadId__1073473045;
+    productId : ProductId__160010635;
+    purchaseDate : Timestamp__301639476;
+    stripeSessionId : Text
+  };
+type Lead__902900922 = Lead__531162083;
+type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type List__415060402<T> = List__790383201<T>;
+type List__790383201<T> =
+  {
+    var blockIndex : Nat__490723111;
+    var blocks : [var [var ?T]];
+    var elementIndex : Nat__490723111
+  };
+type Map__158565046<K, V> = Map__297112838<K, V>;
+type Map__297112838<K, V> =
+  {var root : Node__46230540<K, V>; var size : Nat__490723111};
+type Map__605269027<K, V> = Map__158565046<K, V>;
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type Node__46230540<K, V> =
+  {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
+type ProductId__160010635 = Nat;
+type ProductType__541841516 =
+  {#Compendium; #Framework; #Guide; #Handbook; #Playbook};
+type Product__750902660 =
+  {
+    description : Text;
+    id : ProductId__160010635;
+    isActive : Bool;
+    price : Nat;
+    productType : ProductType__541841516;
+    title : Text
+  };
+type StripeConfiguration__87721349 =
+  {allowedCountries : [Text]; secretKey : Text};
+type Timestamp__301639476 = Int;
+type UserRole__1073662873 = {#admin; #guest; #user};
+actor {
+  stable accessControlState :
+    {
+      var adminAssigned : Bool;
+      userRoles : Map__605269027<Principal, UserRole__1073662873>
+    };
+  stable faqState :
+    {faqs : List__415060402<FAQ__461849730>; state : {var nextId : Nat}};
+  stable faqsCounter : {var nextId : Nat};
+  stable faqsStorage :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?FAQ__461849730]];
+      var elementIndex : Nat__490723111
+    };
+  stable leadState :
+    {leads : List__415060402<Lead__902900922>; state : {var nextId : Nat}};
+  stable leadsCounter : {var nextId : Nat};
+  stable leadsStorage :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?Lead__902900922]];
+      var elementIndex : Nat__490723111
+    };
+  stable products :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?Product__750902660]];
+      var elementIndex : Nat__490723111
+    };
+  stable settingsState : {var facebookPixelId : Text};
+  stable var stripeConfiguration : ?StripeConfiguration__87721349
+};

@@ -1,0 +1,109 @@
+type http_request_result = 
+ record {
+   body: blob;
+   headers: vec http_header;
+   status: nat;
+ };
+type http_header = 
+ record {
+   name: text;
+   value: text;
+ };
+type UserRole = 
+ variant {
+   admin;
+   guest;
+   user;
+ };
+type TransformationOutput = 
+ record {
+   body: blob;
+   headers: vec http_header;
+   status: nat;
+ };
+type TransformationInput = 
+ record {
+   context: blob;
+   response: http_request_result;
+ };
+type Timestamp = int;
+type StripeSessionStatus = 
+ variant {
+   completed: record {
+                response: text;
+                userPrincipal: opt text;
+              };
+   failed: record {error: text;};
+ };
+type StripeConfiguration = 
+ record {
+   allowedCountries: vec text;
+   secretKey: text;
+ };
+type SiteSettings = record {facebookPixelId: text;};
+type ShoppingItem = 
+ record {
+   currency: text;
+   priceInCents: nat;
+   productDescription: text;
+   productName: text;
+   quantity: nat;
+ };
+type ProductType = 
+ variant {
+   Compendium;
+   Framework;
+   Guide;
+   Handbook;
+   Playbook;
+ };
+type ProductId = nat;
+type Product = 
+ record {
+   description: text;
+   id: ProductId;
+   isActive: bool;
+   price: nat;
+   productType: ProductType;
+   title: text;
+ };
+type LeadId = nat;
+type Lead = 
+ record {
+   email: text;
+   fullName: text;
+   id: LeadId;
+   productId: ProductId;
+   purchaseDate: Timestamp;
+   stripeSessionId: text;
+ };
+type FaqId = nat;
+type FAQ = 
+ record {
+   answer: text;
+   displayOrder: nat;
+   id: FaqId;
+   question: text;
+ };
+service : {
+  _initializeAccessControl: () -> ();
+  assignCallerUserRole: (user: principal, role: UserRole) -> ();
+  createCheckoutSession: (items: vec ShoppingItem, successUrl: text,
+   cancelUrl: text) -> (text);
+  createLead: (fullName: text, email: text, productId: ProductId,
+   stripeSessionId: text) -> (Lead);
+  deleteFAQ: (id: FaqId) -> (bool);
+  getCallerUserRole: () -> (UserRole) query;
+  getFAQs: () -> (vec FAQ) query;
+  getLead: (id: LeadId) -> (opt Lead) query;
+  getLeads: () -> (vec Lead) query;
+  getProducts: () -> (vec Product) query;
+  getSiteSettings: () -> (SiteSettings) query;
+  getStripeSessionStatus: (sessionId: text) -> (StripeSessionStatus);
+  isCallerAdmin: () -> (bool) query;
+  isStripeConfigured: () -> (bool) query;
+  setStripeConfiguration: (config: StripeConfiguration) -> ();
+  transform: (input: TransformationInput) -> (TransformationOutput) query;
+  updateSiteSettings: (pixelId: text) -> (SiteSettings);
+  upsertFAQ: (faq: FAQ) -> (FAQ);
+}

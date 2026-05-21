@@ -1,0 +1,23 @@
+{
+  "overview": "A premium digital products website for leaders and executives, featuring compendiums, frameworks, playbooks, guides, and handbooks — with Stripe checkout, lead capture, FAQ support chat, and Facebook Pixel ad tracking.",
+  "features": [
+    "Premium product showcase with placeholder cards for all 5 product types",
+    "Lead capture form (name + email) before every purchase",
+    "Stripe payment processing for paid digital products",
+    "Facebook Pixel tracking for page visits and purchase conversions",
+    "Built-in FAQ/Q&A support widget with admin-managed answers",
+    "Protected admin dashboard to manage products, leads, FAQ items, and Pixel ID",
+    "Deep navy and gold premium branding throughout"
+  ],
+  "category": "digital-products-marketplace",
+  "tags": [
+    "leadership",
+    "digital-products",
+    "premium",
+    "stripe",
+    "ecommerce",
+    "facebook-ads",
+    "executives"
+  ],
+  "last_updated": "2026-05-21T05:11:51.477Z"
+}
