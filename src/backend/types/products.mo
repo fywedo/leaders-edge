@@ -16,5 +16,6 @@ module {
     description : Text;
     price : Nat; // in cents
     isActive : Bool;
+    fileUrl : Text;
   };
 }

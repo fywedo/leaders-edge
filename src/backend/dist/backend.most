@@ -40,12 +40,14 @@ type ProductType__541841516 =
 type Product__750902660 =
   {
     description : Text;
+    fileUrl : Text;
     id : ProductId__160010635;
     isActive : Bool;
     price : Nat;
     productType : ProductType__541841516;
     title : Text
   };
+type Product__843433313 = Product__750902660;
 type StripeConfiguration__87721349 =
   {allowedCountries : [Text]; secretKey : Text};
 type Timestamp__301639476 = Int;
@@ -74,7 +76,13 @@ actor {
       var blocks : [var [var ?Lead__902900922]];
       var elementIndex : Nat__490723111
     };
-  stable products :
+  stable productState :
+    {
+      products : List__415060402<Product__843433313>;
+      state : {var nextId : Nat}
+    };
+  stable productsCounter : {var nextId : Nat};
+  stable productsStorage :
     {
       var blockIndex : Nat__490723111;
       var blocks : [var [var ?Product__750902660]];

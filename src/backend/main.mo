@@ -6,6 +6,7 @@ import Stripe "mo:caffeineai-stripe/stripe";
 import OutCall "mo:caffeineai-http-outcalls/outcall";
 import LeadsLib "lib/leads";
 import FaqsLib "lib/faqs";
+import ProductsLib "lib/products";
 import ProductTypes "types/products";
 import ProductsApi "mixins/products-api";
 import LeadsApi "mixins/leads-api";
@@ -19,7 +20,9 @@ actor {
   include MixinAuthorization(accessControlState);
 
   // Products state
-  let products = List.empty<ProductTypes.Product>();
+  let productsStorage = List.empty<ProductTypes.Product>();
+  let productsCounter = { var nextId : Nat = 1 };
+  let productState : ProductsLib.ProductState = { products = productsStorage; state = productsCounter };
 
   // Leads state
   let leadsStorage = List.empty<LeadsLib.Lead>();
@@ -35,7 +38,7 @@ actor {
   let settingsState : SettingsLib.SettingsState = { var facebookPixelId = "" };
 
   // Include mixins
-  include ProductsApi(products);
+  include ProductsApi(accessControlState, productState);
   include LeadsApi(accessControlState, leadState);
   include FaqsApi(accessControlState, faqState);
   include SettingsApi(accessControlState, settingsState);

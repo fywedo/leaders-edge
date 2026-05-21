@@ -61,6 +61,7 @@ type ProductId = nat;
 type Product = 
  record {
    description: text;
+   fileUrl: text;
    id: ProductId;
    isActive: bool;
    price: nat;
@@ -93,10 +94,12 @@ service : {
   createLead: (fullName: text, email: text, productId: ProductId,
    stripeSessionId: text) -> (Lead);
   deleteFAQ: (id: FaqId) -> (bool);
+  getAdminProducts: () -> (vec Product) query;
   getCallerUserRole: () -> (UserRole) query;
   getFAQs: () -> (vec FAQ) query;
   getLead: (id: LeadId) -> (opt Lead) query;
   getLeads: () -> (vec Lead) query;
+  getProductById: (id: ProductId) -> (opt Product) query;
   getProducts: () -> (vec Product) query;
   getSiteSettings: () -> (SiteSettings) query;
   getStripeSessionStatus: (sessionId: text) -> (StripeSessionStatus);
@@ -106,4 +109,5 @@ service : {
   transform: (input: TransformationInput) -> (TransformationOutput) query;
   updateSiteSettings: (pixelId: text) -> (SiteSettings);
   upsertFAQ: (faq: FAQ) -> (FAQ);
+  upsertProduct: (product: Product) -> (Product);
 }

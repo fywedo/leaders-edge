@@ -1,0 +1,11 @@
+Options -MultiViews
+RewriteEngine On
+
+# Block direct access to private PDF storage
+RewriteRule ^pdfs_private/ - [F,L]
+
+# Pass PHP API requests through directly (files exist, so mod_rewrite won't touch them)
+# The rule below only runs when the request doesn't match a real file or directory — i.e. React routes.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]

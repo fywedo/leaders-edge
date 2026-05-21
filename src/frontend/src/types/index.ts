@@ -6,35 +6,27 @@ export type ProductType =
   | "Handbook";
 
 export interface Product {
-  id: bigint;
+  id: number;
   title: string;
   description: string;
-  productType: ProductType;
+  productType: string;
   isActive: boolean;
-  price: bigint;
+  price: number; // cents
+  fileUrl: string;
 }
 
 export interface Lead {
-  id: bigint;
+  id: number;
   fullName: string;
   email: string;
-  productId: bigint;
-  purchaseDate: bigint;
+  productId: number;
+  purchasedAt: string; // ISO datetime string
   stripeSessionId: string;
 }
 
 export interface FAQ {
-  id: bigint;
+  id: number;
   question: string;
   answer: string;
-  displayOrder: bigint;
-}
-
-export interface SiteSettings {
-  facebookPixelId: string;
-}
-
-export interface CheckoutSessionResult {
-  ok?: string;
-  err?: string;
+  displayOrder: number;
 }

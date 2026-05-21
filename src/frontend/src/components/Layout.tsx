@@ -27,7 +27,7 @@ export default function Layout({ children }: LayoutProps) {
                 <Crown className="w-4 h-4 text-primary" />
               </div>
               <span className="font-display text-xl font-semibold tracking-wide text-primary">
-                Leaders Edge
+                Vanguard Executives
               </span>
             </Link>
 
@@ -100,7 +100,7 @@ export default function Layout({ children }: LayoutProps) {
               <div className="flex items-center gap-2">
                 <Crown className="w-5 h-5 text-primary" />
                 <span className="font-display text-lg font-semibold text-primary">
-                  Leaders Edge
+                  Vanguard Executives
                 </span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -177,7 +177,7 @@ export default function Layout({ children }: LayoutProps) {
 
           <div className="mt-8 pt-8 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              © {year} Leaders Edge. All rights reserved.
+              © {year} Vanguard Executives. All rights reserved.
             </p>
             <p className="text-xs text-muted-foreground">
               Built with love using{" "}

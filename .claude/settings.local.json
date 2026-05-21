@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(caffeine --version)",
+      "Bash(dfx --version)",
+      "Bash(mops --version)",
+      "Bash(pnpm --version)",
+      "Bash(echo \"pnpm: $\\(pnpm --version 2>/dev/null\\)\")",
+      "Bash(pnpm typecheck *)",
+      "Bash(python3 -m json.tool)",
+      "Bash(xargs cat)",
+      "Bash(pnpm install *)",
+      "WebSearch",
+      "WebFetch(domain:internetcomputer.org)",
+      "WebFetch(domain:docs.caffeine.ai)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:help.caffeine.ai)",
+      "Bash(npm search *)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(caffeine --help)",
+      "Read(//home/madalitsonyemba/.nvm/versions/node/v18.20.8/lib/node_modules/**)",
+      "Bash(caffeine auth *)",
+      "Bash(caffeine preview *)",
+      "Bash(caffeine projects *)",
+      "Bash(caffeine build *)",
+      "Bash(caffeine config *)",
+      "Bash(caffeine doctor *)",
+      "Bash(php --version)",
+      "Bash(composer --version)",
+      "Bash(mysql --version)",
+      "Bash(mysql *)",
+      "Bash(awk '{print $2}')",
+      "Bash(xargs sed -i 's/Leaders Edge/Vanguard Executives/g; s/leaders-edge/vanguard-executives/g')"
+    ]
+  }
+}
