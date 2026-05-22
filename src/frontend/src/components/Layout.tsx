@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
-import { Crown } from "lucide-react";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Crown, Mail } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -7,9 +7,29 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const year = new Date().getFullYear();
-  const hostname =
-    typeof window !== "undefined" ? window.location.hostname : "";
-  const caffeineUrl = `https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(hostname)}`;
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isHome = location.pathname === "/";
+
+  function handleHomeClick(e: React.MouseEvent) {
+    if (isHome) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  function scrollToSection(id: string) {
+    if (isHome) {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate({ to: "/" }).then(() => {
+        setTimeout(() => {
+          document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      });
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -22,6 +42,7 @@ export default function Layout({ children }: LayoutProps) {
               to="/"
               className="flex items-center gap-2.5 group"
               data-ocid="nav.logo_link"
+              onClick={handleHomeClick}
             >
               <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center transition-smooth group-hover:bg-primary/30">
                 <Crown className="w-4 h-4 text-primary" />
@@ -40,16 +61,13 @@ export default function Layout({ children }: LayoutProps) {
                 to="/"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
                 data-ocid="nav.home_link"
+                onClick={handleHomeClick}
               >
                 Home
               </Link>
               <button
                 type="button"
-                onClick={() => {
-                  document
-                    .getElementById("products")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }}
+                onClick={() => scrollToSection("products")}
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
                 data-ocid="nav.products_link"
               >
@@ -57,11 +75,7 @@ export default function Layout({ children }: LayoutProps) {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  document
-                    .getElementById("support")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }}
+                onClick={() => scrollToSection("support")}
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
                 data-ocid="nav.support_link"
               >
@@ -70,20 +84,15 @@ export default function Layout({ children }: LayoutProps) {
             </nav>
 
             {/* CTA */}
-            <Link
-              to="/"
+            <button
+              type="button"
               className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary/10 border border-primary/30 text-primary text-sm font-medium hover:bg-primary/20 transition-smooth"
               data-ocid="nav.cta_button"
-              onClick={(e) => {
-                e.preventDefault();
-                document
-                  .getElementById("products")
-                  ?.scrollIntoView({ behavior: "smooth" });
-              }}
+              onClick={() => scrollToSection("products")}
             >
               <Crown className="w-3.5 h-3.5" />
               View Collection
-            </Link>
+            </button>
           </div>
         </div>
       </header>
@@ -107,6 +116,13 @@ export default function Layout({ children }: LayoutProps) {
                 Premium resources for executives and leaders who drive lasting
                 impact.
               </p>
+              <a
+                href="mailto:support@vanguardexec.com"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Mail className="w-4 h-4" />
+                support@vanguardexec.com
+              </a>
             </div>
 
             {/* Navigation */}
@@ -120,6 +136,7 @@ export default function Layout({ children }: LayoutProps) {
                     to="/"
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     data-ocid="footer.home_link"
+                    onClick={handleHomeClick}
                   >
                     Home
                   </Link>
@@ -127,11 +144,7 @@ export default function Layout({ children }: LayoutProps) {
                 <li>
                   <button
                     type="button"
-                    onClick={() =>
-                      document
-                        .getElementById("products")
-                        ?.scrollIntoView({ behavior: "smooth" })
-                    }
+                    onClick={() => scrollToSection("products")}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     data-ocid="footer.products_link"
                   >
@@ -141,11 +154,7 @@ export default function Layout({ children }: LayoutProps) {
                 <li>
                   <button
                     type="button"
-                    onClick={() =>
-                      document
-                        .getElementById("support")
-                        ?.scrollIntoView({ behavior: "smooth" })
-                    }
+                    onClick={() => scrollToSection("support")}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     data-ocid="footer.support_link"
                   >
@@ -179,17 +188,6 @@ export default function Layout({ children }: LayoutProps) {
             <p className="text-xs text-muted-foreground">
               © {year} Vanguard Executives. All rights reserved.
             </p>
-            {/* <p className="text-xs text-muted-foreground">
-              Built with love using{" "}
-              <a
-                href={caffeineUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary/70 hover:text-primary transition-colors"
-              >
-                caffeine.ai
-              </a>
-            </p> */}
           </div>
         </div>
       </footer>

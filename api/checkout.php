@@ -95,6 +95,7 @@ if ($method === 'POST') {
 
     try {
         $session = Session::create([
+            'ui_mode'              => 'embedded',
             'payment_method_types' => ['card'],
             'line_items'           => [[
                 'price_data' => [
@@ -117,14 +118,13 @@ if ($method === 'POST') {
                 'ethicsStatement' => $ethicsStatement,
             ],
             'customer_email' => $email,
-            'success_url'    => APP_URL . '/success?session_id={CHECKOUT_SESSION_ID}&productId=' . $productId,
-            'cancel_url'     => APP_URL . '/checkout',
+            'return_url'     => APP_URL . '/success?session_id={CHECKOUT_SESSION_ID}',
         ]);
     } catch (\Throwable $e) {
         jsonError('Could not create checkout session: ' . $e->getMessage(), 502);
     }
 
-    jsonOk(['url' => $session->url]);
+    jsonOk(['clientSecret' => $session->client_secret]);
 }
 
 jsonError('Method not allowed', 405);

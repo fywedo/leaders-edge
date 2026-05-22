@@ -33,6 +33,7 @@ jobs:
         working-directory: src/frontend
         env:
           VITE_FB_PIXEL_ID: ${{ secrets.VITE_FB_PIXEL_ID }}
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
         run: pnpm build
 
       # ── PHP / Composer ───────────────────────────────────────────────────────

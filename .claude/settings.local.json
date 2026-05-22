@@ -30,7 +30,9 @@
       "Bash(mysql --version)",
       "Bash(mysql *)",
       "Bash(awk '{print $2}')",
-      "Bash(xargs sed -i 's/Leaders Edge/Vanguard Executives/g; s/leaders-edge/vanguard-executives/g')"
+      "Bash(xargs sed -i 's/Leaders Edge/Vanguard Executives/g; s/leaders-edge/vanguard-executives/g')",
+      "Bash(pnpm add *)",
+      "Bash(echo \"EXIT:$?\")"
     ]
   }
 }

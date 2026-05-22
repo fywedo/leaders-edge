@@ -46,7 +46,7 @@ export const api = {
   getFAQs: () => apiFetch<FAQ[]>("/faqs.php"),
 
   checkout: (body: { productId: number; fullName: string; email: string; phone: string; organization: string; ethicsStatement: string }) =>
-    apiFetch<{ url: string }>("/checkout.php", {
+    apiFetch<{ clientSecret: string }>("/checkout.php", {
       method: "POST",
       headers: json(),
       body: JSON.stringify(body),

@@ -1,11 +1,17 @@
 import { trackLead } from "@/components/FacebookPixel";
 import { api } from "@/lib/api";
+import { stripePromise } from "@/lib/stripe";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  EmbeddedCheckout,
+  EmbeddedCheckoutProvider,
+} from "@stripe/react-stripe-js";
 import * as Dialog from "@radix-ui/react-dialog";
-import { AlertTriangle, Crown, Loader2, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Crown, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface LeadCaptureModalProps {
@@ -27,6 +33,9 @@ export default function LeadCaptureModal({
   productDescription,
   onClose,
 }: LeadCaptureModalProps) {
+  const [step, setStep] = useState<"lead" | "payment">("lead");
+  const [clientSecret, setClientSecret] = useState("");
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -40,7 +49,9 @@ export default function LeadCaptureModal({
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, []);
 
   function validateName(value: string) {
@@ -50,7 +61,8 @@ export default function LeadCaptureModal({
 
   function validateEmail(value: string) {
     if (!value) return "Email address is required.";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Please enter a valid email address.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+      return "Please enter a valid email address.";
     return "";
   }
 
@@ -73,7 +85,7 @@ export default function LeadCaptureModal({
     setSessionError("");
 
     try {
-      const { url } = await api.checkout({
+      const { clientSecret: secret } = await api.checkout({
         productId,
         fullName,
         email,
@@ -82,172 +94,264 @@ export default function LeadCaptureModal({
         ethicsStatement: ethicsStatement.slice(0, 500),
       });
       trackLead();
-      window.location.href = url;
+      setClientSecret(secret);
+      setStep("payment");
     } catch (err) {
-      setSessionError("Unable to create checkout session. Please try again or contact support.");
+      setSessionError(
+        "Unable to create checkout session. Please try again or contact support.",
+      );
+    } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <Dialog.Root open onOpenChange={(open) => { if (!open && !isSubmitting) onClose(); }}>
+    <Dialog.Root
+      open
+      onOpenChange={(open) => {
+        if (!open && !isSubmitting) onClose();
+      }}
+    >
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-md max-h-[90vh] overflow-y-auto bg-card border border-border/60 rounded-xl shadow-[0_20px_60px_oklch(0.1_0.02_260/0.6)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          className={cn(
+            "fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-h-[90vh] overflow-y-auto bg-card border border-border/60 rounded-xl shadow-[0_20px_60px_oklch(0.1_0.02_260/0.6)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 transition-[max-width] duration-300",
+            step === "payment" ? "max-w-2xl" : "max-w-md",
+          )}
           aria-describedby="lead-modal-desc"
         >
+          {/* Header */}
           <div className="relative px-6 pt-6 pb-4 border-b border-border/40">
             <div className="flex items-center gap-2 mb-1">
               <Crown className="w-4 h-4 text-primary" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-primary">Premium Access</span>
+              <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+                {step === "payment" ? "Secure Payment" : "Premium Access"}
+              </span>
             </div>
             <Dialog.Title className="font-display text-xl font-bold text-foreground leading-snug">
               {productTitle}
             </Dialog.Title>
-            <Dialog.Description id="lead-modal-desc" className="mt-1 text-sm text-muted-foreground">
-              Complete your details to proceed to secure checkout.{" "}
-              <span className="text-primary font-semibold">{formatPrice(productPrice)}</span>
+            <Dialog.Description
+              id="lead-modal-desc"
+              className="mt-1 text-sm text-muted-foreground"
+            >
+              {step === "payment"
+                ? "Complete your payment below."
+                : "Complete your details to proceed to secure checkout."}{" "}
+              <span className="text-primary font-semibold">
+                {formatPrice(productPrice)}
+              </span>
             </Dialog.Description>
-            <Dialog.Close asChild disabled={isSubmitting}>
+
+            {step === "payment" ? (
               <button
                 type="button"
-                className="absolute right-4 top-4 rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                aria-label="Close modal"
+                onClick={() => setStep("lead")}
+                className="absolute right-4 top-4 rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-1 text-xs"
+                aria-label="Back to details"
               >
-                <X className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4" />
               </button>
-            </Dialog.Close>
+            ) : (
+              <Dialog.Close asChild disabled={isSubmitting}>
+                <button
+                  type="button"
+                  className="absolute right-4 top-4 rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  aria-label="Close modal"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </Dialog.Close>
+            )}
           </div>
 
-          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4" noValidate>
-            <div className="space-y-1.5">
-              <Label htmlFor="lead-name" className="text-sm font-medium text-foreground">
-                Full Name <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="lead-name"
-                type="text"
-                autoComplete="name"
-                placeholder="e.g. Alexandra Chen"
-                value={fullName}
-                onChange={(e) => { setFullName(e.target.value); if (nameError) setNameError(""); }}
-                onBlur={() => setNameError(validateName(fullName))}
-                className={`bg-background border-input ${nameError ? "border-destructive" : ""}`}
-                disabled={isSubmitting}
-              />
-              {nameError && <p className="text-xs text-destructive">{nameError}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="lead-email" className="text-sm font-medium text-foreground">
-                Email Address <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="lead-email"
-                type="email"
-                autoComplete="email"
-                placeholder="e.g. alex@company.com"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(""); }}
-                onBlur={() => setEmailError(validateEmail(email))}
-                className={`bg-background border-input ${emailError ? "border-destructive" : ""}`}
-                disabled={isSubmitting}
-              />
-              {emailError && <p className="text-xs text-destructive">{emailError}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="lead-phone" className="text-sm font-medium text-foreground">
-                Phone Number <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="lead-phone"
-                type="tel"
-                autoComplete="tel"
-                placeholder="e.g. +1 555 000 0000"
-                value={phone}
-                onChange={(e) => { setPhone(e.target.value); if (phoneError) setPhoneError(""); }}
-                onBlur={() => setPhoneError(validatePhone(phone))}
-                className={`bg-background border-input ${phoneError ? "border-destructive" : ""}`}
-                disabled={isSubmitting}
-              />
-              {phoneError && <p className="text-xs text-destructive">{phoneError}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="lead-org" className="text-sm font-medium text-foreground">
-                Organization / Company <span className="text-muted-foreground text-xs font-normal">(optional)</span>
-              </Label>
-              <Input
-                id="lead-org"
-                type="text"
-                autoComplete="organization"
-                placeholder="e.g. Acme Corp"
-                value={organization}
-                onChange={(e) => setOrganization(e.target.value)}
-                className="bg-background border-input"
-                disabled={isSubmitting}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="lead-ethics" className="text-sm font-medium text-foreground">
-                Personal Code of Ethics <span className="text-muted-foreground text-xs font-normal">(optional)</span>
-              </Label>
-              <Textarea
-                id="lead-ethics"
-                rows={3}
-                maxLength={500}
-                placeholder="Briefly describe the values or principles that guide your leadership…"
-                value={ethicsStatement}
-                onChange={(e) => setEthicsStatement(e.target.value)}
-                className="bg-background border-input resize-none"
-                disabled={isSubmitting}
-              />
-              <p className="text-xs text-muted-foreground text-right">{ethicsStatement.length}/500</p>
-            </div>
-
-            {sessionError && (
-              <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-sm">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{sessionError}</span>
-              </div>
-            )}
-
-            <div className="pt-2 flex flex-col gap-3">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-5 text-sm shadow-[0_4px_16px_oklch(0.65_0.18_55/0.3)]"
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Preparing Secure Checkout…
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Crown className="w-4 h-4" />
-                    Proceed to Secure Checkout
-                  </span>
+          {/* Lead form */}
+          {step === "lead" && (
+            <form
+              onSubmit={handleSubmit}
+              className="px-6 py-5 space-y-4"
+              noValidate
+            >
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="lead-name"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Full Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="lead-name"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="e.g. Alexandra Chen"
+                  value={fullName}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    if (nameError) setNameError("");
+                  }}
+                  onBlur={() => setNameError(validateName(fullName))}
+                  className={`bg-background border-input ${nameError ? "border-destructive" : ""}`}
+                  disabled={isSubmitting}
+                />
+                {nameError && (
+                  <p className="text-xs text-destructive">{nameError}</p>
                 )}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={onClose}
-                disabled={isSubmitting}
-                className="w-full text-muted-foreground hover:text-foreground text-sm"
-              >
-                Cancel
-              </Button>
-            </div>
+              </div>
 
-            <p className="text-xs text-center text-muted-foreground pt-1">
-              🔒 Secure checkout powered by Stripe. Your information is protected.
-            </p>
-          </form>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="lead-email"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Email Address <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="lead-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="e.g. alex@company.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError("");
+                  }}
+                  onBlur={() => setEmailError(validateEmail(email))}
+                  className={`bg-background border-input ${emailError ? "border-destructive" : ""}`}
+                  disabled={isSubmitting}
+                />
+                {emailError && (
+                  <p className="text-xs text-destructive">{emailError}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="lead-phone"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Phone Number <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="lead-phone"
+                  type="tel"
+                  autoComplete="tel"
+                  placeholder="e.g. +1 555 000 0000"
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    if (phoneError) setPhoneError("");
+                  }}
+                  onBlur={() => setPhoneError(validatePhone(phone))}
+                  className={`bg-background border-input ${phoneError ? "border-destructive" : ""}`}
+                  disabled={isSubmitting}
+                />
+                {phoneError && (
+                  <p className="text-xs text-destructive">{phoneError}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="lead-org"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Organization / Company{" "}
+                  <span className="text-muted-foreground text-xs font-normal">
+                    (optional)
+                  </span>
+                </Label>
+                <Input
+                  id="lead-org"
+                  type="text"
+                  autoComplete="organization"
+                  placeholder="e.g. Acme Corp"
+                  value={organization}
+                  onChange={(e) => setOrganization(e.target.value)}
+                  className="bg-background border-input"
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="lead-ethics"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Personal Code of Ethics{" "}
+                  <span className="text-muted-foreground text-xs font-normal">
+                    (optional)
+                  </span>
+                </Label>
+                <Textarea
+                  id="lead-ethics"
+                  rows={3}
+                  maxLength={500}
+                  placeholder="Briefly describe the values or principles that guide your leadership…"
+                  value={ethicsStatement}
+                  onChange={(e) => setEthicsStatement(e.target.value)}
+                  className="bg-background border-input resize-none"
+                  disabled={isSubmitting}
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {ethicsStatement.length}/500
+                </p>
+              </div>
+
+              {sessionError && (
+                <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{sessionError}</span>
+                </div>
+              )}
+
+              <div className="pt-2 flex flex-col gap-3">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-5 text-sm shadow-[0_4px_16px_oklch(0.65_0.18_55/0.3)]"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Preparing Secure Checkout…
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Crown className="w-4 h-4" />
+                      Proceed to Secure Checkout
+                    </span>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={onClose}
+                  disabled={isSubmitting}
+                  className="w-full text-muted-foreground hover:text-foreground text-sm"
+                >
+                  Cancel
+                </Button>
+              </div>
+
+              <p className="text-xs text-center text-muted-foreground pt-1">
+                🔒 Secure checkout powered by Stripe. Your information is
+                protected.
+              </p>
+            </form>
+          )}
+
+          {/* Embedded payment */}
+          {step === "payment" && clientSecret && (
+            <div className="px-6 py-5">
+              <EmbeddedCheckoutProvider
+                stripe={stripePromise}
+                options={{ clientSecret }}
+              >
+                <EmbeddedCheckout />
+              </EmbeddedCheckoutProvider>
+            </div>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

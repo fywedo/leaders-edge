@@ -62,9 +62,14 @@ query(
     [$fullName, $email, $phone, $organization, $ethicsStatement, $productId, $sessionId, $token, $expires]
 );
 
-// Send purchase confirmation email
+// Send purchase confirmation to customer
 if ($email !== '' && SMTP_HOST !== '') {
     sendPurchaseEmail($email, $fullName, $product['title'] ?? 'your product', $token);
+}
+
+// Notify admin
+if (SMTP_HOST !== '') {
+    sendAdminNotificationEmail($fullName, $email, $phone, $organization ?? '', $product['title'] ?? 'Unknown product');
 }
 
 jsonOk(['received' => true]);
@@ -123,4 +128,55 @@ HTML;
 function emailText(string $name, string $product, string $url): string
 {
     return "Thank you, {$name}!\n\nYour purchase of {$product} is confirmed.\n\nDownload link (valid 48 hours):\n{$url}\n\nSave the file after downloading.\n\n— Vanguard Executives";
+}
+
+function sendAdminNotificationEmail(string $fullName, string $email, string $phone, string $organization, string $productTitle): void
+{
+    $adminEmail = 'support@vanguardexec.com';
+    $purchasedAt = date('Y-m-d H:i:s T');
+
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host       = SMTP_HOST;
+        $mail->SMTPAuth   = true;
+        $mail->Username   = SMTP_USER;
+        $mail->Password   = SMTP_PASS;
+        $mail->SMTPSecure = SMTP_PORT === 465 ? PHPMailer::ENCRYPTION_SMTPS : PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = SMTP_PORT;
+
+        $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
+        $mail->addAddress($adminEmail);
+        $mail->Subject = "New Purchase: {$productTitle} — {$fullName}";
+
+        $org = $organization !== '' ? htmlspecialchars($organization) : '<em>—</em>';
+
+        $mail->isHTML(true);
+        $mail->Body = <<<HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family:Georgia,serif;background:#0f1b2d;color:#e8dcc8;margin:0;padding:40px 20px;">
+  <div style="max-width:560px;margin:0 auto;background:#162236;border-radius:12px;padding:40px;border-top:3px solid #c9943a;">
+    <h1 style="font-size:20px;color:#c9943a;margin-top:0;">New Purchase</h1>
+    <table style="width:100%;border-collapse:collapse;font-size:15px;line-height:1.7;">
+      <tr><td style="color:#8a9ab5;padding:6px 0;width:130px;">Product</td><td style="color:#e8dcc8;"><strong>{$productTitle}</strong></td></tr>
+      <tr><td style="color:#8a9ab5;padding:6px 0;">Name</td><td style="color:#e8dcc8;">{$fullName}</td></tr>
+      <tr><td style="color:#8a9ab5;padding:6px 0;">Email</td><td style="color:#e8dcc8;"><a href="mailto:{$email}" style="color:#c9943a;">{$email}</a></td></tr>
+      <tr><td style="color:#8a9ab5;padding:6px 0;">Phone</td><td style="color:#e8dcc8;">{$phone}</td></tr>
+      <tr><td style="color:#8a9ab5;padding:6px 0;">Organization</td><td style="color:#e8dcc8;">{$org}</td></tr>
+      <tr><td style="color:#8a9ab5;padding:6px 0;">Purchased at</td><td style="color:#e8dcc8;">{$purchasedAt}</td></tr>
+    </table>
+    <hr style="border:none;border-top:1px solid #2a3a52;margin:32px 0;">
+    <p style="font-size:13px;color:#8a9ab5;margin:0;">Vanguard Executives &mdash; Admin Notification</p>
+  </div>
+</body>
+</html>
+HTML;
+        $mail->AltBody = "New Purchase\n\nProduct: {$productTitle}\nName: {$fullName}\nEmail: {$email}\nPhone: {$phone}\nOrganization: {$organization}\nPurchased at: {$purchasedAt}";
+
+        $mail->send();
+    } catch (\Throwable) {
+        // Non-fatal
+    }
 }
