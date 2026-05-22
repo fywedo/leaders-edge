@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import * as Dialog from "@radix-ui/react-dialog";
 import { AlertTriangle, Crown, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -28,8 +29,12 @@ export default function LeadCaptureModal({
 }: LeadCaptureModalProps) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState("");
+  const [phone, setPhone] = useState("");
+  const [organization, setOrganization] = useState("");
+  const [ethicsStatement, setEthicsStatement] = useState("");
   const [nameError, setNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sessionError, setSessionError] = useState("");
 
@@ -38,14 +43,19 @@ export default function LeadCaptureModal({
     return () => { document.body.style.overflow = ""; };
   }, []);
 
+  function validateName(value: string) {
+    if (!value.trim()) return "Full name is required.";
+    return "";
+  }
+
   function validateEmail(value: string) {
     if (!value) return "Email address is required.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Please enter a valid email address.";
     return "";
   }
 
-  function validateName(value: string) {
-    if (!value.trim()) return "Full name is required.";
+  function validatePhone(value: string) {
+    if (!value.trim()) return "Phone number is required.";
     return "";
   }
 
@@ -53,15 +63,24 @@ export default function LeadCaptureModal({
     e.preventDefault();
     const ne = validateName(fullName);
     const ee = validateEmail(email);
+    const pe = validatePhone(phone);
     setNameError(ne);
     setEmailError(ee);
-    if (ne || ee) return;
+    setPhoneError(pe);
+    if (ne || ee || pe) return;
 
     setIsSubmitting(true);
     setSessionError("");
 
     try {
-      const { url } = await api.checkout({ productId, fullName, email });
+      const { url } = await api.checkout({
+        productId,
+        fullName,
+        email,
+        phone,
+        organization,
+        ethicsStatement: ethicsStatement.slice(0, 500),
+      });
       trackLead();
       window.location.href = url;
     } catch (err) {
@@ -75,7 +94,7 @@ export default function LeadCaptureModal({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border/60 rounded-xl shadow-[0_20px_60px_oklch(0.1_0.02_260/0.6)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-md max-h-[90vh] overflow-y-auto bg-card border border-border/60 rounded-xl shadow-[0_20px_60px_oklch(0.1_0.02_260/0.6)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
           aria-describedby="lead-modal-desc"
         >
           <div className="relative px-6 pt-6 pb-4 border-b border-border/40">
@@ -136,6 +155,57 @@ export default function LeadCaptureModal({
                 disabled={isSubmitting}
               />
               {emailError && <p className="text-xs text-destructive">{emailError}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="lead-phone" className="text-sm font-medium text-foreground">
+                Phone Number <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="lead-phone"
+                type="tel"
+                autoComplete="tel"
+                placeholder="e.g. +1 555 000 0000"
+                value={phone}
+                onChange={(e) => { setPhone(e.target.value); if (phoneError) setPhoneError(""); }}
+                onBlur={() => setPhoneError(validatePhone(phone))}
+                className={`bg-background border-input ${phoneError ? "border-destructive" : ""}`}
+                disabled={isSubmitting}
+              />
+              {phoneError && <p className="text-xs text-destructive">{phoneError}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="lead-org" className="text-sm font-medium text-foreground">
+                Organization / Company <span className="text-muted-foreground text-xs font-normal">(optional)</span>
+              </Label>
+              <Input
+                id="lead-org"
+                type="text"
+                autoComplete="organization"
+                placeholder="e.g. Acme Corp"
+                value={organization}
+                onChange={(e) => setOrganization(e.target.value)}
+                className="bg-background border-input"
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="lead-ethics" className="text-sm font-medium text-foreground">
+                Personal Code of Ethics <span className="text-muted-foreground text-xs font-normal">(optional)</span>
+              </Label>
+              <Textarea
+                id="lead-ethics"
+                rows={3}
+                maxLength={500}
+                placeholder="Briefly describe the values or principles that guide your leadership…"
+                value={ethicsStatement}
+                onChange={(e) => setEthicsStatement(e.target.value)}
+                className="bg-background border-input resize-none"
+                disabled={isSubmitting}
+              />
+              <p className="text-xs text-muted-foreground text-right">{ethicsStatement.length}/500</p>
             </div>
 
             {sessionError && (

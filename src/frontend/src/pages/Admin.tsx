@@ -195,6 +195,7 @@ function StatCards() {
 
 function LeadsTab() {
   const { data: leads = [], isLoading } = useLeads();
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const formatDate = (ts: string) =>
     new Date(ts).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
@@ -208,6 +209,8 @@ function LeadsTab() {
       </div>
     );
   }
+
+  const COLS = ["Full Name", "Email", "Phone", "Organization", "Date", "Ethics", "Stripe Session"];
 
   return (
     <div>
@@ -230,24 +233,48 @@ function LeadsTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/40 border-b border-border">
-                  {["Full Name", "Email", "Product ID", "Purchase Date", "Stripe Session"].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-muted-foreground font-medium">{h}</th>
+                  {COLS.map((h) => (
+                    <th key={h} className="text-left px-4 py-3 text-muted-foreground font-medium whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead, idx) => (
-                  <tr key={lead.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                    <td className="px-4 py-3 text-foreground font-medium">{lead.fullName}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{lead.email}</td>
-                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{lead.productId}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{formatDate(lead.purchasedAt)}</td>
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-xs text-primary truncate block max-w-[160px]">
-                        {lead.stripeSessionId || "—"}
-                      </span>
-                    </td>
-                  </tr>
+                {leads.map((lead) => (
+                  <>
+                    <tr key={lead.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3 text-foreground font-medium whitespace-nowrap">{lead.fullName}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{lead.email}</td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{lead.phone || "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{lead.organization || "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(lead.purchasedAt)}</td>
+                      <td className="px-4 py-3">
+                        {lead.ethicsStatement ? (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedId(expandedId === lead.id ? null : lead.id)}
+                            className="text-xs text-primary hover:underline text-left max-w-[140px] block truncate"
+                          >
+                            {expandedId === lead.id ? "Collapse ▲" : `${lead.ethicsStatement.slice(0, 40)}…`}
+                          </button>
+                        ) : (
+                          <span className="text-muted-foreground/50 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-xs text-primary truncate block max-w-[160px]">
+                          {lead.stripeSessionId || "—"}
+                        </span>
+                      </td>
+                    </tr>
+                    {expandedId === lead.id && lead.ethicsStatement && (
+                      <tr key={`${lead.id}-ethics`} className="bg-muted/30 border-b border-border/50">
+                        <td colSpan={COLS.length} className="px-4 py-3">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Personal Code of Ethics</p>
+                          <p className="text-sm text-foreground leading-relaxed">{lead.ethicsStatement}</p>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))}
               </tbody>
             </table>

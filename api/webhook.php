@@ -35,11 +35,14 @@ if ($session->payment_status !== 'paid') {
     jsonOk(['received' => true]);
 }
 
-$meta      = $session->metadata->toArray();
-$productId = (int)($meta['productId'] ?? 0);
-$fullName  = $meta['fullName'] ?? 'Customer';
-$email     = $meta['email'] ?? '';
-$sessionId = $session->id;
+$meta            = $session->metadata->toArray();
+$productId       = (int)($meta['productId'] ?? 0);
+$fullName        = $meta['fullName'] ?? 'Customer';
+$email           = $meta['email'] ?? '';
+$phone           = $meta['phone'] ?? '';
+$organization    = ($meta['organization'] ?? '') !== '' ? $meta['organization'] : null;
+$ethicsStatement = ($meta['ethicsStatement'] ?? '') !== '' ? $meta['ethicsStatement'] : null;
+$sessionId       = $session->id;
 
 // Skip if already saved (idempotency)
 $existing = query('SELECT id FROM leads WHERE stripe_session_id = ?', [$sessionId])->fetch();
@@ -55,8 +58,8 @@ $token   = bin2hex(random_bytes(32));
 $expires = date('Y-m-d H:i:s', strtotime('+48 hours'));
 
 query(
-    'INSERT INTO leads (full_name, email, product_id, stripe_session_id, download_token, token_expires_at) VALUES (?,?,?,?,?,?)',
-    [$fullName, $email, $productId, $sessionId, $token, $expires]
+    'INSERT INTO leads (full_name, email, phone, organization, ethics_statement, product_id, stripe_session_id, download_token, token_expires_at) VALUES (?,?,?,?,?,?,?,?,?)',
+    [$fullName, $email, $phone, $organization, $ethicsStatement, $productId, $sessionId, $token, $expires]
 );
 
 // Send purchase confirmation email

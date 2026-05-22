@@ -19,6 +19,9 @@ export interface Lead {
   id: number;
   fullName: string;
   email: string;
+  phone: string;
+  organization: string | null;
+  ethicsStatement: string | null;
   productId: number;
   purchasedAt: string; // ISO datetime string
   stripeSessionId: string;

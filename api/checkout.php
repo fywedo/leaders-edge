@@ -43,10 +43,13 @@ if ($method === 'GET') {
     }
 
     // Webhook was delayed — create the lead now
-    $meta      = $session->metadata->toArray();
-    $productId = (int)($meta['productId'] ?? 0);
-    $fullName  = $meta['fullName'] ?? 'Customer';
-    $email     = $meta['email'] ?? '';
+    $meta            = $session->metadata->toArray();
+    $productId       = (int)($meta['productId'] ?? 0);
+    $fullName        = $meta['fullName'] ?? 'Customer';
+    $email           = $meta['email'] ?? '';
+    $phone           = $meta['phone'] ?? '';
+    $organization    = $meta['organization'] !== '' ? $meta['organization'] : null;
+    $ethicsStatement = $meta['ethicsStatement'] !== '' ? $meta['ethicsStatement'] : null;
 
     $product = $productId > 0
         ? query('SELECT * FROM products WHERE id = ?', [$productId])->fetch()
@@ -59,8 +62,8 @@ if ($method === 'GET') {
     $existing = query('SELECT id FROM leads WHERE stripe_session_id = ?', [$sessionId])->fetch();
     if (!$existing) {
         query(
-            'INSERT INTO leads (full_name, email, product_id, stripe_session_id, download_token, token_expires_at) VALUES (?,?,?,?,?,?)',
-            [$fullName, $email, $productId, $sessionId, $token, $expires]
+            'INSERT INTO leads (full_name, email, phone, organization, ethics_statement, product_id, stripe_session_id, download_token, token_expires_at) VALUES (?,?,?,?,?,?,?,?,?)',
+            [$fullName, $email, $phone, $organization, $ethicsStatement, $productId, $sessionId, $token, $expires]
         );
     } else {
         $token = query('SELECT download_token FROM leads WHERE stripe_session_id = ?', [$sessionId])->fetchColumn();
@@ -75,13 +78,16 @@ if ($method === 'GET') {
 
 // POST — create Stripe Checkout session
 if ($method === 'POST') {
-    $body      = json_decode(file_get_contents('php://input'), true);
-    $productId = (int)($body['productId'] ?? 0);
-    $fullName  = trim($body['fullName'] ?? '');
-    $email     = trim($body['email'] ?? '');
+    $body            = json_decode(file_get_contents('php://input'), true);
+    $productId       = (int)($body['productId'] ?? 0);
+    $fullName        = trim($body['fullName'] ?? '');
+    $email           = trim($body['email'] ?? '');
+    $phone           = trim($body['phone'] ?? '');
+    $organization    = trim($body['organization'] ?? '');
+    $ethicsStatement = mb_substr(trim($body['ethicsStatement'] ?? ''), 0, 500);
 
-    if ($productId === 0 || $fullName === '' || $email === '') {
-        jsonError('productId, fullName and email are required');
+    if ($productId === 0 || $fullName === '' || $email === '' || $phone === '') {
+        jsonError('productId, fullName, email and phone are required');
     }
 
     $product = query('SELECT * FROM products WHERE id = ? AND is_active = 1', [$productId])->fetch();
@@ -103,9 +109,12 @@ if ($method === 'POST') {
             ]],
             'mode'        => 'payment',
             'metadata'    => [
-                'productId' => (string)$productId,
-                'fullName'  => $fullName,
-                'email'     => $email,
+                'productId'       => (string)$productId,
+                'fullName'        => $fullName,
+                'email'           => $email,
+                'phone'           => $phone,
+                'organization'    => $organization,
+                'ethicsStatement' => $ethicsStatement,
             ],
             'customer_email' => $email,
             'success_url'    => APP_URL . '/success?session_id={CHECKOUT_SESSION_ID}&productId=' . $productId,
